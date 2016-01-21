@@ -13,43 +13,6 @@ namespace Log {
 
 //----------------------------------------------------------------------------------
 
-LogSinkBase *_LogSinkList = nullptr;
-static std::mutex _LogSinkListMutex;
-
-struct LogEngine::LogEngineImpl {
-	using LogLinePool = Utils::Memory::StaticMemoryPool<LogLine, 256, Utils::Memory::NoLockPolicy>;
-	using LogLineStringPool = Utils::Memory::StaticStringPool<char, LogLinePool::Size * 256, Utils::Memory::NoLockPolicy>;
-
-	struct LineBuffer {
-		std::mutex m_Mutex;
-		LogLinePool m_Lines;
-		LogLineStringPool m_Strings;
-		void Clear() {
-			m_Lines.Clear();
-			m_Strings.Clear();
-		}
-	};
-
-	LineBuffer m_Buffers[2];
-	LineBuffer *m_Primary, *m_Secondary;
-	volatile bool m_ThreadCanRun;
-	volatile bool m_ThreadRunning;
-
-	LogEngineImpl() {
-		m_Primary = m_Buffers;
-		m_Secondary = m_Buffers + 1;
-		m_Primary->Clear();
-		m_Secondary->Clear();
-	}
-
-	~LogEngineImpl() {
-
-	}
-
-};
-
-//----------------------------------------------------------------------------------
-
 LogEngine* LogEngine::_Instance = nullptr;
 
 LogEngine::LogEngine() {
