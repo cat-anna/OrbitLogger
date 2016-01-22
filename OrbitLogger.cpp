@@ -5,32 +5,12 @@
  *      Author: Paweu
  */
 
-#include <pch.h>
+#include "OrbitLogger.h"
 
 namespace Log {
 
 #if 0
 
-//----------------------------------------------------------------------------------
-
-LogEngine* LogEngine::_Instance = nullptr;
-
-LogEngine::LogEngine() {
-	_Instance = this;
-
-	m_Impl = std::make_unique<LogEngineImpl>();
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-}
-
-LogEngine::~LogEngine() {
-}
-
-void LogEngine::DeleteInstance() {
-	delete _Instance;
-	_Instance = nullptr;
-}
-
-#if 0
 void LogEngine::ProcessLine(LogLine *line) {
 	def _BUILDING_ENGINE_
 	if (ConsoleExists() && line->m_Mode < LogLineType::MaxScreenConsole)
@@ -49,7 +29,6 @@ void LogEngine::ProcessLine(LogLine *line) {
 		}
 	}
 }
-#endif
 
 //----------------------------------------------------------------------------------
 
@@ -79,45 +58,6 @@ void StaticLogCatcher::DispatchLog() {
 
 #endif
 #endif
-
-//----------------------------------------------------------------------------------
-
-LogSinkBase::LogSinkBase(): m_Previous(nullptr) {
-}
-
-LogSinkBase::~LogSinkBase() {
-	//Disable();
-}
-
-void LogSinkBase::line(const LogLine *line) {
-	//Disable();
-}
-
-void LogSinkBase::Enable() {
-	LOCK_MUTEX(_LogSinkListMutex);
-	m_Previous = _LogSinkList;
-	_LogSinkList = this;
-}
-
-void LogSinkBase::Disable() {
-	LOCK_MUTEX(_LogSinkListMutex);
-	if (_LogSinkList == this) {
-		_LogSinkList = m_Previous;
-		m_Previous = nullptr;
-		return;
-	}
-
-	LogSinkBase *prv = nullptr;
-	LogSinkBase *next = _LogSinkList;
-	for (; next; prv = next, next = next->m_Previous) {
-		if (next != this)
-			continue;
-		prv->m_Previous = next->m_Previous;
-		m_Previous = nullptr;
-		break;
-	}
-}
-
 #endif
 
 } // namespace Log

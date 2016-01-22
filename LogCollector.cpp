@@ -4,8 +4,6 @@
   * by Paweu
 */
 /*--END OF HEADER BLOCK--*/
-#include <pch.h>
-
 #include <cstdarg>
 #include <thread>
 #include <chrono>

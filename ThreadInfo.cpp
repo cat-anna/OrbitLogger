@@ -4,7 +4,7 @@
   * by Paweu
 */
 /*--END OF HEADER BLOCK--*/
-#include <pch.h>
+#include "OrbitLogger.h"
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -14,8 +14,6 @@
 #else
 #error Unknown OS
 #endif
-
-#include "ThreadInfo.h"
 
 namespace OrbitLogger {
 

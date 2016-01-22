@@ -4,8 +4,6 @@
   * by Paweu
 */
 /*--END OF HEADER BLOCK--*/
-#include <pch.h>
-
 #include <ctime>
 
 #include "OrbitLogger.h"
@@ -78,8 +76,10 @@ void LogStandardFormatter::Format(const LogLine *line, char* buffer, size_t buff
 #error Unknown OS
 #endif
 
-		if (!f) 
+		if (!f)
 			f = srcinfo->m_File;
+		else
+			++f;
 
 		if (srcinfo->m_Line)
 			sprintf(LogLocation, "[%s:%d@%s] ", f, srcinfo->m_Line, srcinfo->m_Function);
