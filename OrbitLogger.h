@@ -13,6 +13,12 @@
 #include <fstream>
 #include <sstream>
 
+#ifdef _MSC_VER
+#if _MSC_VER < 1900 && !defined(thread_local)
+#define thread_local __declspec(thread)
+#endif
+#endif
+
 #include "ThreadInfo.h"
 
 namespace OrbitLogger {

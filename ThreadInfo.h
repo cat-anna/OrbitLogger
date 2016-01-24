@@ -6,8 +6,8 @@
 /*--END OF HEADER BLOCK--*/
 
 #pragma once
-#ifndef Thread_H
-#define Thread_H
+#ifndef ThreadInfo_H
+#define ThreadInfo_H
 
 namespace OrbitLogger {
 

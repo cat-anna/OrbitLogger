@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include "OrbitLogger.h"
+#include "Platform.h"
 
 namespace OrbitLogger {
 
@@ -25,9 +26,9 @@ void LogFileOutputPolicy::Open(const char*file, bool append) {
 	m_File.open(file, std::ios::out | (append ? std::ios::app : 0));
 
 	Write(nullptr, "=========================== SESSION ==========================\n");
-	Write(nullptr, "OrbitLogger build date: " __DATE__ " at " __TIME__ "\n");
 	Write(nullptr, "OrbitLogger version: " ORBIT_LOGGER_VERSION_STRING "\n");
-	Write(nullptr, "Build configuration: " CONFIGURATION_NAME "\n");
+	Write(nullptr, "OrbitLogger build date: " __DATE__ " at " __TIME__ "\n");
+	Write(nullptr, "OrbitLogger Build configuration: " CONFIGURATION_NAME "\n");
 	Write(nullptr, "OS: " OS_NAME "\n");
 	Write(nullptr, "Start date: ");
 
@@ -56,12 +57,12 @@ void LogStandardFormatter::Format(const LogLine *line, char* buffer, size_t buff
 
 	ThreadInfo::SignatureBuffer thname(line->m_ThreadSign);
 #ifdef ORBITLOGGER_EXTENDED_LOG_COUNTERS
-	sprintf(LogHeader, "[%4s:%4d][%7.3f:%4d][%4s:%04x]",
+	snprintf(LogHeader, sizeof(LogHeader), "[%4s:%4d][%7.3f:%4d][%4s:%04x]",
 			line->m_ModeStr, NextType(line->m_SourceInfo->m_Mode),
 			line->m_ExecutionSecs, NextLine(),
 			thname.m_String, line->m_ThreadID);
 #else
-	sprintf(LogHeader, "[%4s][%7.3f][%4s:%04x]",
+	snprintf(LogHeader, sizeof(LogHeader), "[%4s][%7.3f][%4s:%04x]",
 			LineType[line->m_Mode], line->m_ExecutionSecs, thname.m_String, line->m_ThreadID);
 #endif
 
@@ -82,13 +83,13 @@ void LogStandardFormatter::Format(const LogLine *line, char* buffer, size_t buff
 			++f;
 
 		if (srcinfo->m_Line)
-			sprintf(LogLocation, "[%s:%d@%s] ", f, srcinfo->m_Line, srcinfo->m_Function);
+			snprintf(LogLocation, sizeof(LogLocation), "[%s:%d@%s] ", f, srcinfo->m_Line, srcinfo->m_Function);
 		else
-			sprintf(LogLocation, "[%s] ", f);
+			snprintf(LogLocation, sizeof(LogLocation), "[%s] ", f);
 	} else
 		LogLocation[0] = 0;
 
-	sprintf_s(buffer, buffer_size, "%s%s%s\n", LogHeader, LogLocation, line->m_Message);
+	snprintf(buffer, buffer_size, "%s%s%s\n", LogHeader, LogLocation, line->m_Message);
 }
 
 } //namespace OrbitLogger 

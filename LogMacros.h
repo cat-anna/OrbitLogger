@@ -8,7 +8,7 @@
 #ifdef ORBITLOGGER_DISASBLE_LOGGING
 
 #define ORBITLOGGER_CreateLog(A, ...)				ORBITLOGGER_DISASBLED_ACTION()
-#define AddLogOnce(...)							ORBITLOGGER_DISASBLED_ACTION()
+#define AddLogOnce(...)								ORBITLOGGER_DISASBLED_ACTION()
 #define AddLogOncef(...)							ORBITLOGGER_DISASBLED_ACTION()
 
 #else

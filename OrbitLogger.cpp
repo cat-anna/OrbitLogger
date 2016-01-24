@@ -6,6 +6,7 @@
  */
 
 #include "OrbitLogger.h"
+#include "Platform.h"
 
 namespace Log {
 

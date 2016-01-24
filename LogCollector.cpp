@@ -10,6 +10,7 @@
 #include <atomic>
 
 #include "OrbitLogger.h"
+#include "Platform.h"
 
 namespace OrbitLogger {
 
@@ -199,7 +200,7 @@ private:
 		//StaticLogCatcher::DispatchLog();
 		//#endif
 		
-		while (true) {
+		for (;;) {
 			//I consider this switch as thread-safe
 			//the writers will just start to use another pointer
 			auto *buffer = m_CurrentBuffer;

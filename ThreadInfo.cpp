@@ -5,6 +5,7 @@
 */
 /*--END OF HEADER BLOCK--*/
 #include "OrbitLogger.h"
+#include "Platform.h"
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -21,7 +22,10 @@ thread_local bool ThreadInfo::_IsMain = false;
 thread_local ThreadInfo::Signature ThreadInfo::_ThisThreadSignature = '\0?';
 
 void ThreadInfo::SetName(const char* sign, bool IsMain) {
-	strncpy((char*)&_ThisThreadSignature, sign, sizeof(_ThisThreadSignature));
+	if (sign) {
+		Signature *signsrc = (Signature*)sign;
+		_ThisThreadSignature = *signsrc;
+	}
 	_IsMain = IsMain;
 }
 
@@ -33,7 +37,6 @@ ThreadInfo::NumericID ThreadInfo::GetID() {
 #else
 #error Unknown OS
 #endif
-	return 0;
 }
 
 } //namespace OrbitLogger
