@@ -40,7 +40,7 @@ struct LogNoFilteringPolicy {
 
 struct LogNoDebugFilteringPolicy {
 	bool Filter(const LogLine *line) const {
-		return (line->m_SourceInfo->m_Flags & LogLineFlags::DebugLine) == 0;
+		return line->m_SourceInfo->m_Channel != LogChannels::Debug;
 	}
 };
 
@@ -64,9 +64,9 @@ struct LogStandardFormatter {
 protected:
 #ifdef ORBITLOGGER_EXTENDED_LOG_COUNTERS
 	unsigned NextLine() { return ++m_Line; }
-	unsigned NextType(LineType t) { return ++m_Type[(unsigned)t]; }
+	unsigned NextType(LogChannel t) { return ++m_Type[(unsigned)t]; }
 	unsigned m_Line;
-	unsigned m_Type[(unsigned)LineType::MaxValue];
+	unsigned m_Type[LogChannels::MaxLogChannels];
 #endif
 };
 

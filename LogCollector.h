@@ -13,6 +13,8 @@ namespace OrbitLogger {
 
 class LogCollector {
 public:
+	struct LogCollectorImpl;
+
 	static bool Start();
 	static bool Stop();
 	static bool IsRunning();
@@ -34,13 +36,22 @@ public:
 		return true;
 	}
 
+	static void SetChannelName(LogChannel Channel, const char *Name);
+	static void SetChannelState(LogChannel Channel, bool Enabled);
+
+	static bool IsChannelEnabled(LogChannel Channel);
+	static bool IsChannelEnabled(const LogLineSourceInfo* SourceInfo) { return IsChannelEnabled(SourceInfo->m_Channel); }
+
 	static iLogSinkBase* InsertLogSink(std::unique_ptr<iLogSinkBase> sink);
+
+	static LogCollectorImpl *GetInstance() { return s_Instance.m_Impl.get(); }
+	static void SetExternalInstance(LogCollectorImpl *instance);
 protected:
 	LogCollector();
  	~LogCollector();
 
-	struct LogCollectorImpl;
 	std::unique_ptr<LogCollectorImpl> m_Impl;
+	bool m_LocalInstance;
 private: 
 	static LogCollector s_Instance;
 };

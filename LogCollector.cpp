@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cassert>
 
 #include "OrbitLogger.h"
 #include "Platform.h"
@@ -16,41 +17,32 @@ namespace OrbitLogger {
 
 struct LineTypeStringTable {
 	LineTypeStringTable() {
-		for (unsigned i = 0; i < (unsigned)LineType::MaxValue; ++i) {
-			m_Table[i] = " ?? ";
-			m_DebugTable[i] = " ?? ";
+		for (unsigned i = 0; i < LogChannels::MaxLogChannels; ++i) {
+			char buf[16];
+			sprintf_s(buf, "CH%02d", i);
+			Set(i, buf);
 		}
-
-#define _set(T, NAME) T[(unsigned)LineType:: NAME]
-
-		_set(m_Table, Normal) = "NORM";
-		_set(m_Table, Critical) = "CRIT";
-		_set(m_Table, Error) = "ERR ";
-		_set(m_Table, Warning) = "WARN";
-		_set(m_Table, Hint) = "HINT";
-		_set(m_Table, SysInfo) = "SYS ";
-
-		_set(m_DebugTable, Normal) = "DBG ";
-		_set(m_DebugTable, Critical) = "CRIT";
-		_set(m_DebugTable, Error) = "DBGE";
-		_set(m_DebugTable, Warning) = "DBGW";
-		_set(m_DebugTable, Hint) = "DBGH";
-		_set(m_DebugTable, SysInfo) = "SYS ";
-
+#define _set(NAME, V) Set(LogChannels:: NAME, V)
+		_set(Info, "INFO");
+		_set(Critical, "CRIT");
+		_set(Error, "ERR ");
+		_set(Warning, "WARN");
+		_set(Hint, "HINT");
+		_set(System, "SYS ");
 #undef _set
 	}
-
-	const char *GetRegular(LineType type) const { return m_Table[(unsigned)type]; }
-	const char *GetDebug(LineType type) const { return m_DebugTable[(unsigned)type]; }
-
-	const char *Get(LineType type = LineType::Normal, unsigned Flags = 0) const { 
-		if (Flags & LogLineFlags::DebugLine)
-			return GetDebug(type);
-		return GetRegular(type);
+	const char *Get(LogChannel type = LogChannels::Info) const { return m_Table[type].Name; }
+	void Set(LogChannel type, const char *Name) {
+		auto &e = m_Table[type];
+		e.value = 0;
+		strncpy(e.Name, Name, 5);
 	}
 private:
-	const char *m_Table[(unsigned)LineType::MaxValue];
-	const char *m_DebugTable[(unsigned)LineType::MaxValue];
+	union Entry {
+		char Name[8];
+		uint64_t value;
+	};
+	Entry m_Table[LogChannels::MaxLogChannels];
 };
 
 //----------------------------------------------------------------------------------
@@ -92,7 +84,7 @@ struct LogLineBuffer {
 		size_t buffer = m_StringBufferUsage.exchange(0);
 
 		if (lines > Configuration::LogLineBufferCapacity) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Critical, 0);
+			ORBITLOGGER_MakeSourceInfo(logsrc, Critical);
 			auto line = AllocLogLine();
 			line->m_SourceInfo = &logsrc;
 			line->m_Message = "LogLine buffer overflow!";
@@ -100,9 +92,8 @@ struct LogLineBuffer {
 			line->m_ThreadID = ThreadInfo::GetID();
 			line->m_ExecutionSecs = 0;
 		}
-
 		if (buffer > Configuration::LogLineStringBufferSize) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Critical, 0);
+			ORBITLOGGER_MakeSourceInfo(logsrc, Critical);
 			auto line = AllocLogLine();
 			line->m_SourceInfo = &logsrc;
 			line->m_Message = "LogLine string buffer overflow!";
@@ -124,6 +115,10 @@ private:
 struct LogCollector::LogCollectorImpl {
 	LogCollectorImpl(): m_FirstBuffer(), m_SecondBuffer() {
 		m_ExecutionTime = std::chrono::steady_clock::now();
+		m_DisabledChannels = 0;
+#ifdef DEBUG
+		m_DisabledChannels |= (1 << LogChannels::Debug);
+#endif
 
 		m_CurrentBuffer = &m_FirstBuffer;
 		m_InactiveBuffer = &m_SecondBuffer;
@@ -179,11 +174,25 @@ struct LogCollector::LogCollectorImpl {
 		}
 		return nullptr;
 	}
+
+	bool IsChannelEnabled(LogChannel Channel) {
+		LogChannel bit = 1 << Channel;
+		return (m_DisabledChannels & bit) == 0;
+	}
+	void SetChannelName(LogChannel Channel, const char *Name) {
+		m_LineTypeTable.Set(Channel, Name);
+	}
+	void SetChannelState(LogChannel Channel, bool Enabled) {
+		if (Enabled)
+			m_DisabledChannels &= ~(1 << Channel);
+		else
+			m_DisabledChannels |= (1 << Channel);
+	}
 private:
 	void ThreadEntry() {
 		m_ThreadRunning = true;
 		ThreadInfo::SetName("LOGC");
-		AddLog(Thread, "LogCollector thread executed");
+		AddLog(Info, "LogCollector thread executed");
 		try {
 			//give some time to settle things
 			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -223,7 +232,7 @@ private:
 	void ProcessLine(LogLine *line) {
 		auto srcinfo = line->m_SourceInfo;
 		if(srcinfo)
-			line->m_ModeStr = m_LineTypeTable.Get(srcinfo->m_Mode, srcinfo->m_Flags);
+			line->m_ModeStr = m_LineTypeTable.Get(srcinfo->m_Channel);
 		else
 			line->m_ModeStr = m_LineTypeTable.Get();
 
@@ -245,10 +254,10 @@ private:
 
 	LogLineBuffer *m_CurrentBuffer, *m_InactiveBuffer;
 	LineTypeStringTable m_LineTypeTable;
+	LogChannel m_DisabledChannels;
 	std::unique_ptr<iLogSinkBase> m_SinkTable[Configuration::MaxSinkCount];
 
 	LogLineBuffer m_FirstBuffer, m_SecondBuffer;
-
 };
 
 //----------------------------------------------------------------------------------
@@ -257,14 +266,21 @@ private:
 LogCollector LogCollector::s_Instance;
 
 LogCollector::LogCollector() {
-	//nothing there
+	m_LocalInstance = false;
 }
 
 LogCollector::~LogCollector() {
-	//nothing there
 }
 
 //----------------------------------------------------------------------------------
+
+bool LogCollector::IsChannelEnabled(LogChannel Channel) {
+	assert(Channel < LogChannels::MaxLogChannels);
+	if (!s_Instance.m_Impl)
+		return false;
+
+	return s_Instance.m_Impl->IsChannelEnabled(Channel);
+}
 
 void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...) {
 	if (!s_Instance.m_Impl)
@@ -284,16 +300,38 @@ void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt
 void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss) {
 	if (!s_Instance.m_Impl)
 		return;
-
 	auto s = ss.str();
 	s_Instance.m_Impl->PushLine(SourceInfo, s.c_str(), s.length());
 }
 
 //----------------------------------------------------------------------------------
 
-bool LogCollector::Start() {
+void LogCollector::SetChannelName(LogChannel Channel, const char *Name) {
+	assert(Channel < LogChannels::MaxLogChannels);
+	if (!s_Instance.m_Impl)
+		return;
+	s_Instance.m_Impl->SetChannelName(Channel, Name);
+}
 
+void LogCollector::SetChannelState(LogChannel Channel, bool Enabled) {
+	assert(Channel < LogChannels::MaxLogChannels);
+	if (!s_Instance.m_Impl)
+		return;
+	s_Instance.m_Impl->SetChannelState(Channel, Enabled);
+}
+
+void LogCollector::SetExternalInstance(LogCollectorImpl *instance) {
+	s_Instance.Stop();
+	s_Instance.m_LocalInstance = false;
+	s_Instance.m_Impl.reset(instance);
+}
+
+//----------------------------------------------------------------------------------
+
+bool LogCollector::Start() {
+	Stop();
 #ifndef ORBITLOGGER_DISASBLE_LOGGING
+	s_Instance.m_LocalInstance = true;
 	if (!s_Instance.m_Impl)
 		s_Instance.m_Impl = std::make_unique<LogCollectorImpl>();
 #endif
@@ -301,7 +339,10 @@ bool LogCollector::Start() {
 }
 
 bool LogCollector::Stop() {
-	s_Instance.m_Impl.reset();
+	if (s_Instance.m_LocalInstance)
+		s_Instance.m_Impl.reset();
+	else
+		s_Instance.m_Impl.release();
 	return true;
 }
 

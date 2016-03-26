@@ -58,7 +58,7 @@ void LogStandardFormatter::Format(const LogLine *line, char* buffer, size_t buff
 	ThreadInfo::SignatureBuffer thname(line->m_ThreadSign);
 #ifdef ORBITLOGGER_EXTENDED_LOG_COUNTERS
 	snprintf(LogHeader, sizeof(LogHeader), "[%4s:%4d][%7.3f:%4d][%4s:%04x]",
-			line->m_ModeStr, NextType(line->m_SourceInfo->m_Mode),
+			line->m_ModeStr, NextType(line->m_SourceInfo->m_Channel),
 			line->m_ExecutionSecs, NextLine(),
 			thname.m_String, line->m_ThreadID);
 #else
