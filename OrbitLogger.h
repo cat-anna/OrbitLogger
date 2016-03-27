@@ -56,8 +56,9 @@ namespace LogChannels {
 		Hint,
 		Debug,
 		System,
+		Thread,
 
-		internal_reserved_0,
+		internal_reserved_0, //UniverseRenderer - Renderer
 		internal_reserved_1,
 		internal_reserved_2,
 		internal_reserved_3,
@@ -65,9 +66,10 @@ namespace LogChannels {
 		internal_reserved_5,
 		internal_reserved_6,
 		internal_reserved_7,
-		internal_reserved_8,
 
 		FirstUserChannel,
+
+		MaxInternalNamedChannel = Thread + 1,
 	};
 }
 

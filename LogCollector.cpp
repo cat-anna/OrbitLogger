@@ -29,6 +29,7 @@ struct LineTypeStringTable {
 		_set(Warning, "WARN");
 		_set(Hint, "HINT");
 		_set(System, "SYS ");
+		_set(Thread, "THRD");
 #undef _set
 	}
 	const char *Get(LogChannel type = LogChannels::Info) const { return m_Table[type].Name; }
@@ -116,8 +117,10 @@ struct LogCollector::LogCollectorImpl {
 	LogCollectorImpl(): m_FirstBuffer(), m_SecondBuffer() {
 		m_ExecutionTime = std::chrono::steady_clock::now();
 		m_DisabledChannels = 0;
+		for (LogChannel it = 0; it < LogChannels::MaxInternalNamedChannel; ++it)
+			SetChannelState(it, true);
 #ifdef DEBUG
-		m_DisabledChannels |= (1 << LogChannels::Debug);
+		m_DisabledChannels &= ~(1 << LogChannels::Debug);
 #endif
 
 		m_CurrentBuffer = &m_FirstBuffer;
@@ -177,16 +180,16 @@ struct LogCollector::LogCollectorImpl {
 
 	bool IsChannelEnabled(LogChannel Channel) {
 		LogChannel bit = 1 << Channel;
-		return (m_DisabledChannels & bit) == 0;
+		return (m_DisabledChannels & bit) != 0;
 	}
 	void SetChannelName(LogChannel Channel, const char *Name) {
 		m_LineTypeTable.Set(Channel, Name);
 	}
 	void SetChannelState(LogChannel Channel, bool Enabled) {
 		if (Enabled)
-			m_DisabledChannels &= ~(1 << Channel);
-		else
 			m_DisabledChannels |= (1 << Channel);
+		else
+			m_DisabledChannels &= ~(1 << Channel);
 	}
 private:
 	void ThreadEntry() {
@@ -305,12 +308,12 @@ void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const std::ostr
 }
 
 //----------------------------------------------------------------------------------
-
-void LogCollector::SetChannelName(LogChannel Channel, const char *Name) {
+void LogCollector::SetChannelName(LogChannel Channel, const char *Name, bool EnableChannel) {
 	assert(Channel < LogChannels::MaxLogChannels);
 	if (!s_Instance.m_Impl)
 		return;
 	s_Instance.m_Impl->SetChannelName(Channel, Name);
+	s_Instance.m_Impl->SetChannelState(Channel, EnableChannel);
 }
 
 void LogCollector::SetChannelState(LogChannel Channel, bool Enabled) {

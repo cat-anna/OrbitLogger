@@ -36,7 +36,7 @@ public:
 		return true;
 	}
 
-	static void SetChannelName(LogChannel Channel, const char *Name);
+	static void SetChannelName(LogChannel Channel, const char *Name, bool EnableChannel = true);
 	static void SetChannelState(LogChannel Channel, bool Enabled);
 
 	static bool IsChannelEnabled(LogChannel Channel);
