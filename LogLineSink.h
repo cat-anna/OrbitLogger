@@ -92,8 +92,10 @@ struct CStreamOutputPolicy : public LogSinkBasePolicy {
 	void SetStdErr() { SetStream(stderr, false); }
 
 	void Write(const LogLine *line, const char *c) {
-		if(m_Stream)
+		if (m_Stream) {
 			fprintf(m_Stream, c);
+			fflush(m_Stream);
+		}
 	}
 
 	void CloseStream() {
