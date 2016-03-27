@@ -15,32 +15,26 @@ iLogSinkBase::iLogSinkBase() { }
 
 iLogSinkBase::~iLogSinkBase() { }
 
-//----------------------------------------------------------------------------------
 
-LogFileOutputPolicy::~LogFileOutputPolicy() {
-	m_File << "\n\n";
-	m_File.close();
-}
-
-void LogFileOutputPolicy::Open(const char*file, bool append) {
-	m_File.open(file, std::ios::out | (append ? std::ios::app : 0));
-
-	Write(nullptr, "=========================== SESSION ==========================\n");
-	Write(nullptr, "OrbitLogger version: " ORBIT_LOGGER_VERSION_STRING "\n");
-	Write(nullptr, "OrbitLogger build date: " __DATE__ " at " __TIME__ "\n");
-	Write(nullptr, "OrbitLogger Build configuration: " CONFIGURATION_NAME "\n");
-	Write(nullptr, "OS: " OS_NAME "\n");
-	Write(nullptr, "Start date: ");
+void iLogSinkBase::PrintBanner() {
+	RawLine("=========================== SESSION ==========================\n");
+	RawLine("OrbitLogger version: " ORBIT_LOGGER_VERSION_STRING "\n");
+	RawLine("OrbitLogger build date: " __DATE__ " at " __TIME__ "\n");
+#ifdef CONFIGURATION_NAME
+	RawLine("OrbitLogger Build configuration: " CONFIGURATION_NAME "\n");
+#endif
+	RawLine("OS: " OS_NAME "\n");
+	RawLine("Start date: ");
 
 	std::time_t t = std::time(NULL);
 	char mbstr[100];
 	if (std::strftime(mbstr, sizeof(mbstr), "%A %c", std::localtime(&t))) {
-		Write(nullptr, mbstr);
-		Write(nullptr, "\n");
+		RawLine(mbstr);
+		RawLine("\n");
 	} else
-		Write(nullptr, "{unable to covert date}\n");
+		RawLine("{unable to covert date}\n");
 
-	Write(nullptr, "\n");
+	RawLine("\n");
 }
 
 //----------------------------------------------------------------------------------

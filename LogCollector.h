@@ -23,8 +23,8 @@ public:
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
 
 	template<class T, class ...ARGS>
-	static iLogSinkBase* AddLogSink(ARGS ... args) {
-		return InsertLogSink(std::make_unique<T>(std::forward<ARGS>(args)...));
+	static T* AddLogSink(ARGS ... args) {
+		return dynamic_cast<T*>(InsertLogSink(std::make_unique<T>(std::forward<ARGS>(args)...)));
 	}
 
 	template<class T, class F, class ...ARGS>
