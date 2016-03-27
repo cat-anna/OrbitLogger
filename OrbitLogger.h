@@ -60,6 +60,12 @@ namespace LogChannels {
 		internal_reserved_0,
 		internal_reserved_1,
 		internal_reserved_2,
+		internal_reserved_3,
+		internal_reserved_4,
+		internal_reserved_5,
+		internal_reserved_6,
+		internal_reserved_7,
+		internal_reserved_8,
 
 		FirstUserChannel,
 	};
