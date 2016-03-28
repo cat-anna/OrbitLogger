@@ -60,7 +60,7 @@ namespace LogChannels {
 
 		internal_reserved_0, //UniverseRenderer - Renderer
 		internal_reserved_1,
-		internal_reserved_2,
+		internal_reserved_2, //StarVFS
 		internal_reserved_3,
 		internal_reserved_4,
 		internal_reserved_5,

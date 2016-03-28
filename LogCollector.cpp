@@ -36,7 +36,12 @@ struct LineTypeStringTable {
 	void Set(LogChannel type, const char *Name) {
 		auto &e = m_Table[type];
 		e.value = 0;
-		strncpy(e.Name, Name, 5);
+		for (size_t i = 0; i < 4; ++i) {
+			char c = Name[i];
+			if (!c)
+				break;
+			e.Name[i] = c;
+		}
 	}
 private:
 	union Entry {
