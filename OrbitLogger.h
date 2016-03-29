@@ -50,26 +50,19 @@ namespace LogChannels {
 
 	enum Enum : LogChannel {
 		Info,
-		Critical,
 		Error,
 		Warning,
 		Hint,
 		Debug,
 		System,
 		Thread,
+		
+		reserved0,
 
-		internal_reserved_0, //UniverseRenderer - Renderer
-		internal_reserved_1,
-		internal_reserved_2, //StarVFS
-		internal_reserved_3,
-		internal_reserved_4,
-		internal_reserved_5,
-		internal_reserved_6,
-		internal_reserved_7,
+		MaxInternalNamedChannel,
 
-		FirstUserChannel,
+		FirstUserChannel = MaxInternalNamedChannel,
 
-		MaxInternalNamedChannel = Thread + 1,
 	};
 }
 

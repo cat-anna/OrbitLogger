@@ -24,7 +24,6 @@ struct LineTypeStringTable {
 		}
 #define _set(NAME, V) Set(LogChannels:: NAME, V)
 		_set(Info, "INFO");
-		_set(Critical, "CRIT");
 		_set(Error, "ERR ");
 		_set(Warning, "WARN");
 		_set(Hint, "HINT");
@@ -90,7 +89,7 @@ struct LogLineBuffer {
 		size_t buffer = m_StringBufferUsage.exchange(0);
 
 		if (lines > Configuration::LogLineBufferCapacity) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Critical);
+			ORBITLOGGER_MakeSourceInfo(logsrc, Error);
 			auto line = AllocLogLine();
 			line->m_SourceInfo = &logsrc;
 			line->m_Message = "LogLine buffer overflow!";
@@ -99,7 +98,7 @@ struct LogLineBuffer {
 			line->m_ExecutionSecs = 0;
 		}
 		if (buffer > Configuration::LogLineStringBufferSize) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Critical);
+			ORBITLOGGER_MakeSourceInfo(logsrc, Error);
 			auto line = AllocLogLine();
 			line->m_SourceInfo = &logsrc;
 			line->m_Message = "LogLine string buffer overflow!";
