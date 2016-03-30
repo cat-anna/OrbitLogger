@@ -29,6 +29,7 @@ struct LineTypeStringTable {
 		_set(Hint, "HINT");
 		_set(System, "SYS ");
 		_set(Thread, "THRD");
+		_set(Debug, "DBG ");
 #undef _set
 	}
 	const char *Get(LogChannel type = LogChannels::Info) const { return m_Table[type].Name; }
@@ -184,16 +185,16 @@ struct LogCollector::LogCollectorImpl {
 
 	bool IsChannelEnabled(LogChannel Channel) {
 		LogChannel bit = 1 << Channel;
-		return (m_DisabledChannels & bit) != 0;
+		return (m_DisabledChannels & bit) == 0;
 	}
 	void SetChannelName(LogChannel Channel, const char *Name) {
 		m_LineTypeTable.Set(Channel, Name);
 	}
 	void SetChannelState(LogChannel Channel, bool Enabled) {
 		if (Enabled)
-			m_DisabledChannels |= (1 << Channel);
-		else
 			m_DisabledChannels &= ~(1 << Channel);
+		else
+			m_DisabledChannels |= (1 << Channel);
 	}
 private:
 	void ThreadEntry() {
