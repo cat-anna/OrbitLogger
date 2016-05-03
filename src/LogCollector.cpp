@@ -12,6 +12,7 @@
 
 #include "OrbitLogger.h"
 #include "Platform.h"
+#include "StreamReader.h"
 
 namespace OrbitLogger {
 
@@ -141,6 +142,10 @@ struct LogCollector::LogCollectorImpl {
 
 	~LogCollectorImpl() {
 		m_ThreadCanRun = false;
+
+		m_StdOutReader.reset();
+		m_StdErrReader.reset();
+
 		for (int i = 0; i < 1000 && m_ThreadRunning; ++i) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
@@ -195,6 +200,19 @@ struct LogCollector::LogCollectorImpl {
 			m_DisabledChannels &= ~(1 << Channel);
 		else
 			m_DisabledChannels |= (1 << Channel);
+	}
+
+	bool SetCaptureStdOut(LogChannel ch) {
+		if (m_StdOutReader)
+			return false;
+		m_StdOutReader = std::make_unique<StreamReader>(stdout, ch);
+		return true;
+	}
+	bool SetCaptureStdErr(LogChannel ch) {
+		if (m_StdErrReader)
+			return false;
+		m_StdErrReader = std::make_unique<StreamReader>(stderr, ch);
+		return true;
 	}
 private:
 	void ThreadEntry() {
@@ -264,6 +282,8 @@ private:
 	LineTypeStringTable m_LineTypeTable;
 	LogChannel m_DisabledChannels;
 	std::unique_ptr<iLogSinkBase> m_SinkTable[Configuration::MaxSinkCount];
+	std::unique_ptr<StreamReader> m_StdOutReader;
+	std::unique_ptr<StreamReader> m_StdErrReader;
 
 	LogLineBuffer m_FirstBuffer, m_SecondBuffer;
 };
@@ -278,6 +298,27 @@ LogCollector::LogCollector() {
 }
 
 LogCollector::~LogCollector() {
+}
+
+//----------------------------------------------------------------------------------
+
+bool LogCollector::SetCaptureStdOutAndErr(LogChannel out, LogChannel err) {
+	if (!s_Instance.m_Impl)
+		return false;
+	bool ret = true;
+	ret &= s_Instance.m_Impl->SetCaptureStdOut(out);
+	ret &= s_Instance.m_Impl->SetCaptureStdErr(err);
+	return ret;
+}
+bool LogCollector::SetCaptureStdOut(LogChannel ch) {
+	if (!s_Instance.m_Impl)
+		return false;
+	return s_Instance.m_Impl->SetCaptureStdOut(ch);
+}
+bool LogCollector::SetCaptureStdErr(LogChannel ch) {
+	if (!s_Instance.m_Impl)
+		return false;
+	return s_Instance.m_Impl->SetCaptureStdErr(ch);
 }
 
 //----------------------------------------------------------------------------------

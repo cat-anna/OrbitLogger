@@ -19,6 +19,10 @@ public:
 	static bool Stop();
 	static bool IsRunning();
 
+	static bool SetCaptureStdOutAndErr(LogChannel out = LogChannels::Info, LogChannel err = LogChannels::Error);
+	static bool SetCaptureStdOut(LogChannel ch = LogChannels::Info);
+	static bool SetCaptureStdErr(LogChannel ch = LogChannels::Error);
+
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...);
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
 
