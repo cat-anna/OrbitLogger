@@ -25,6 +25,7 @@ public:
 
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...);
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
+	static bool PushLineQuerry(const LogLineSourceInfo* SourceInfo);
 
 	template<class T, class ...ARGS>
 	static T* AddLogSink(ARGS ... args) {
@@ -45,6 +46,15 @@ public:
 
 	static bool IsChannelEnabled(LogChannel Channel);
 	static bool IsChannelEnabled(const LogLineSourceInfo* SourceInfo) { return IsChannelEnabled(SourceInfo->m_Channel); }
+
+	struct ChannelInfo {
+		bool m_Enabled;
+		LogChannel m_Channel;
+		const char* m_Name;
+		uint32_t m_LinesPushed;
+	};
+	using ChannelInfoTable = std::array<ChannelInfo, LogChannels::MaxLogChannels>;
+	static bool GetChannelInfo(ChannelInfoTable &table);
 
 	static iLogSinkBase* InsertLogSink(std::unique_ptr<iLogSinkBase> sink);
 

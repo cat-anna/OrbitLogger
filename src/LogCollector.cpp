@@ -9,6 +9,7 @@
 #include <chrono>
 #include <atomic>
 #include <cassert>
+#include <array>
 
 #include "OrbitLogger.h"
 #include "Platform.h"
@@ -123,6 +124,9 @@ struct LogCollector::LogCollectorImpl {
 	LogCollectorImpl(): m_FirstBuffer(), m_SecondBuffer() {
 		m_ExecutionTime = std::chrono::steady_clock::now();
 		m_DisabledChannels = 0;
+		for (auto &it : m_ChannelCounter)
+			it.store(0);
+
 		for (LogChannel it = 0; it < LogChannels::MaxInternalNamedChannel; ++it)
 			SetChannelState(it, true);
 #ifdef DEBUG
@@ -187,11 +191,18 @@ struct LogCollector::LogCollectorImpl {
 		}
 		return nullptr;
 	}
+	
+	bool PushLineQuerry(const LogLineSourceInfo* SourceInfo) {
+		LogChannel bit = 1 << SourceInfo->m_Channel;
+		++m_ChannelCounter[SourceInfo->m_Channel];
+		return (m_DisabledChannels & bit) == 0;
+	}
 
 	bool IsChannelEnabled(LogChannel Channel) {
 		LogChannel bit = 1 << Channel;
 		return (m_DisabledChannels & bit) == 0;
 	}
+
 	void SetChannelName(LogChannel Channel, const char *Name) {
 		m_LineTypeTable.Set(Channel, Name);
 	}
@@ -214,6 +225,25 @@ struct LogCollector::LogCollectorImpl {
 		m_StdErrReader = std::make_unique<StreamReader>(stderr, ch);
 		return true;
 	}
+
+	bool GetChannelInfo(ChannelInfoTable &table) {
+		for (size_t i = 0; i < table.size(); ++i) {
+			auto &it = table[i];
+			it.m_Channel = static_cast<LogChannel>(i);
+
+			if (s_Instance.m_Impl) {
+				it.m_Enabled = IsChannelEnabled(it.m_Channel);
+				it.m_LinesPushed = m_ChannelCounter[it.m_Channel].load();
+				it.m_Name = m_LineTypeTable.Get(it.m_Channel);
+			} else {
+				it.m_Enabled = false;
+				it.m_LinesPushed = 0;
+				it.m_Name = "";
+			}
+		}
+		return true;
+	}
+
 private:
 	void ThreadEntry() {
 		m_ThreadRunning = true;
@@ -281,6 +311,7 @@ private:
 	LogLineBuffer *m_CurrentBuffer, *m_InactiveBuffer;
 	LineTypeStringTable m_LineTypeTable;
 	LogChannel m_DisabledChannels;
+	std::array<std::atomic<uint32_t>, LogChannels::MaxLogChannels> m_ChannelCounter;
 	std::unique_ptr<iLogSinkBase> m_SinkTable[Configuration::MaxSinkCount];
 	std::unique_ptr<StreamReader> m_StdOutReader;
 	std::unique_ptr<StreamReader> m_StdErrReader;
@@ -310,15 +341,25 @@ bool LogCollector::SetCaptureStdOutAndErr(LogChannel out, LogChannel err) {
 	ret &= s_Instance.m_Impl->SetCaptureStdErr(err);
 	return ret;
 }
+
 bool LogCollector::SetCaptureStdOut(LogChannel ch) {
 	if (!s_Instance.m_Impl)
 		return false;
 	return s_Instance.m_Impl->SetCaptureStdOut(ch);
 }
+
 bool LogCollector::SetCaptureStdErr(LogChannel ch) {
 	if (!s_Instance.m_Impl)
 		return false;
 	return s_Instance.m_Impl->SetCaptureStdErr(ch);
+}
+
+//----------------------------------------------------------------------------------
+
+bool LogCollector::GetChannelInfo(ChannelInfoTable &table) {
+	if (!s_Instance.m_Impl)
+		return false;
+	return s_Instance.m_Impl->GetChannelInfo(table);
 }
 
 //----------------------------------------------------------------------------------
@@ -329,6 +370,14 @@ bool LogCollector::IsChannelEnabled(LogChannel Channel) {
 		return false;
 
 	return s_Instance.m_Impl->IsChannelEnabled(Channel);
+}
+
+bool LogCollector::PushLineQuerry(const LogLineSourceInfo* SourceInfo) {
+	assert(SourceInfo->m_Channel < LogChannels::MaxLogChannels);
+	if (!s_Instance.m_Impl)
+		return false;
+
+	return s_Instance.m_Impl->PushLineQuerry(SourceInfo);
 }
 
 void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...) {
@@ -354,6 +403,7 @@ void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const std::ostr
 }
 
 //----------------------------------------------------------------------------------
+
 void LogCollector::SetChannelName(LogChannel Channel, const char *Name, bool EnableChannel) {
 	assert(Channel < LogChannels::MaxLogChannels);
 	if (!s_Instance.m_Impl)
