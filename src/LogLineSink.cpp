@@ -56,8 +56,7 @@ void LogStandardFormatter::Format(const LogLine *line, char* buffer, size_t buff
 			line->m_ExecutionSecs, NextLine(),
 			thname.m_String, line->m_ThreadID);
 #else
-	snprintf(LogHeader, sizeof(LogHeader), "[%4s][%7.3f][%4s:%04x]",
-			LineType[line->m_Mode], line->m_ExecutionSecs, thname.m_String, line->m_ThreadID);
+	snprintf(LogHeader, sizeof(LogHeader), "[%4s][%7.3f][%4s:%04x]", line->m_ModeStr, line->m_ExecutionSecs, thname.m_String, line->m_ThreadID);
 #endif
 
 	char LogLocation[1024];
