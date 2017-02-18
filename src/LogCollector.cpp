@@ -181,6 +181,22 @@ struct LogCollector::LogCollectorImpl {
 		line->m_ThreadID = ThreadInfo::GetID();
 	}
 
+	void PushLinePtr(const LogLineSourceInfo* SourceInfo, const char* message) {
+		std::chrono::duration<double> sec = std::chrono::steady_clock::now() - m_ExecutionTime;
+
+		auto *LogBuffer = m_CurrentBuffer;
+
+		auto line = LogBuffer->AllocLogLine();
+		if (!line)
+			return;
+
+		line->m_SourceInfo = SourceInfo;
+		line->m_Message = message;
+		line->m_ExecutionSecs = static_cast<float>(sec.count());
+		line->m_ThreadSign = ThreadInfo::GetSignature();
+		line->m_ThreadID = ThreadInfo::GetID();
+	}
+
 	iLogSinkBase* InsertLogSink(std::unique_ptr<iLogSinkBase> sink) {
 		for (size_t i = 0; i < Configuration::MaxSinkCount; ++i) {
 			auto &table = m_SinkTable[i];
@@ -378,6 +394,13 @@ bool LogCollector::PushLineQuerry(const LogLineSourceInfo* SourceInfo) {
 		return false;
 
 	return s_Instance.m_Impl->PushLineQuerry(SourceInfo);
+}
+
+void LogCollector::PushLinePtr(const LogLineSourceInfo* SourceInfo, const char* line) 	{
+	if (!s_Instance.m_Impl || !line)
+		return;
+
+	s_Instance.m_Impl->PushLinePtr(SourceInfo, line);
 }
 
 void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...) {

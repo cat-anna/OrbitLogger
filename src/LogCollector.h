@@ -23,6 +23,13 @@ public:
 	static bool SetCaptureStdOut(LogChannel ch = LogChannels::Info);
 	static bool SetCaptureStdErr(LogChannel ch = LogChannels::Error);
 
+	static void PushLinePtr(const LogLineSourceInfo* SourceInfo, const char *line);
+
+	template<size_t LEN>
+	static void PushLine(const LogLineSourceInfo* SourceInfo, const char line[LEN]) {
+		PushLinePtr(SourceInfo, line);
+	}
+
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...);
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
 	static bool PushLineQuerry(const LogLineSourceInfo* SourceInfo);
