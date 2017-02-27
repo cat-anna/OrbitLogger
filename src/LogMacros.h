@@ -1,4 +1,3 @@
-
 #pragma once
 
 //macros prefixed with ORBITLOGGER are internal and should not be used
@@ -16,7 +15,7 @@
 #define ORBITLOGGER_CreateLog(A, ...) \
 do { \
 	ORBITLOGGER_MakeSourceInfo(__srcinfo, A); \
-	if(::OrbitLogger::LogCollector::PushLineQuerry(&__srcinfo)) \
+	if(::OrbitLogger::LogCollector::IsLineEnabled(&__srcinfo)) \
 		::OrbitLogger::LogCollector::PushLine(&__srcinfo, __VA_ARGS__); \
 } while(false)
 
@@ -30,6 +29,18 @@ do { \
 
 #define AddLog(CHANNEL, A)						ORBITLOGGER_BeginLog(CHANNEL, A)
 #define AddLogf(CHANNEL, ...)					ORBITLOGGER_BeginLogf(CHANNEL, __VA_ARGS__)
+
+#if defined(DEBUG) || defined(ORBITLOGGER_ENABLE_DEBUGLOG)
+
+#define DebugLog(CHANNEL, A)					ORBITLOGGER_BeginLog(CHANNEL, A)
+#define DebugLogf(CHANNEL, ...)					ORBITLOGGER_BeginLogf(CHANNEL, __VA_ARGS__)
+
+#else
+
+#define DebugLog(CHANNEL, A)				   ORBITLOGGER_DISASBLED_ACTION()
+#define DebugLogf(CHANNEL, ...)				   ORBITLOGGER_DISASBLED_ACTION()
+
+#endif
 
 #define LogInvalidEnum(V)						AddLogf(Error, "Invalid enum value (enum:'%s' value:%lu)", typeid(V).name(), static_cast<unsigned long>(V))
 

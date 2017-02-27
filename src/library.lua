@@ -1,8 +1,8 @@
 	
-group "Libraries"
+group "lib"
 	project "OrbitLogger"
 		kind "StaticLib"
 		files {
-			"*.lua", "*.cpp", "*.h",
+			"*.lua", "**.cpp", "**.h",
 		}
 		

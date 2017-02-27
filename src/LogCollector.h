@@ -19,33 +19,36 @@ public:
 	static bool Stop();
 	static bool IsRunning();
 
-	static bool SetCaptureStdOutAndErr(LogChannel out = LogChannels::Info, LogChannel err = LogChannels::Error);
 	static bool SetCaptureStdOut(LogChannel ch = LogChannels::Info);
 	static bool SetCaptureStdErr(LogChannel ch = LogChannels::Error);
 
 	static void PushLinePtr(const LogLineSourceInfo* SourceInfo, const char *line);
+	static void PushLineCopy(const LogLineSourceInfo* SourceInfo, const char *line, size_t length);
 
 	template<size_t LEN>
 	static void PushLine(const LogLineSourceInfo* SourceInfo, const char line[LEN]) {
 		PushLinePtr(SourceInfo, line);
 	}
 
-	static void PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...);
-	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
-	static bool PushLineQuerry(const LogLineSourceInfo* SourceInfo);
+	static void PushLine(const LogLineSourceInfo* SourceInfo, const char* fmt, ...) {
+		char buffer[Configuration::StringFormatBuffer];
+		va_list args;
+		va_start(args, fmt);
+		int length = vsprintf_s(buffer, fmt, args);
+		va_end(args);
 
-	template<class T, class ...ARGS>
-	static T* AddLogSink(ARGS ... args) {
-		return dynamic_cast<T*>(InsertLogSink(std::make_unique<T>(std::forward<ARGS>(args)...)));
+		if (length < 0)
+			return;
+
+		PushLineCopy(SourceInfo, buffer, length);
 	}
 
-	template<class T, class F, class ...ARGS>
-	static bool OpenLogSink(F f, ARGS ... args) {
-		auto sink = dynamic_cast<T*>(InsertLogSink(std::make_unique<T>(std::forward<ARGS>(args)...)));
-		if (!sink)
-			return false;
-		f(sink);
-		return true;
+	static void PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss);
+	static bool IsLineEnabled(const LogLineSourceInfo* SourceInfo);
+
+	template<class T, class ...ARGS>
+	static T* AddLogSink(ARGS&& ... args) {
+		return dynamic_cast<T*>(InsertLogSink(std::make_unique<T>(std::forward<ARGS>(args)...)));
 	}
 
 	static void SetChannelName(LogChannel Channel, const char *Name, bool EnableChannel = true);

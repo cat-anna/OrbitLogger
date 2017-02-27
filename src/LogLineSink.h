@@ -60,57 +60,6 @@ struct LogNoDebugFilteringPolicy : public LogSinkBasePolicy {
 
 //----------------------------------------------------------------------------------
 
-struct LogFileOutputPolicy : public LogSinkBasePolicy {
-	~LogFileOutputPolicy() {
-		m_File << "\n\n";
-		m_File.close();
-	}
-	void Open(const char*file, bool append = true) {
-		m_File.open(file, std::ios::out | (append ? std::ios::app : 0));
-		GetSinkBase().PrintBanner();
-	}
-	void Write(const LogLine *line, const char *c) {
-		m_File << c << std::flush;
-	}
-protected:
-	std::ofstream m_File;
-};
-
-struct CStreamOutputPolicy : public LogSinkBasePolicy {
-	CStreamOutputPolicy(): m_Stream(nullptr), m_Close(false) {}
-	~CStreamOutputPolicy() { 
-		CloseStream();
-	}
-	void SetStream(FILE *Stream, bool AutoClose = true) {
-		CloseStream();
-		m_Stream = Stream;
-		m_Close = AutoClose;
-		GetSinkBase().PrintBanner();
-	}
-
-	void SetStdOut() { SetStream(stdout, false); }
-	void SetStdErr() { SetStream(stderr, false); }
-
-	void Write(const LogLine *line, const char *c) {
-		if (m_Stream) {
-			fprintf(m_Stream, c);
-			fflush(m_Stream);
-		}
-	}
-
-	void CloseStream() {
-		if (m_Close && m_Stream)
-			fclose(m_Stream);
-		m_Stream = nullptr;
-		m_Close = false;
-	}
-protected:
-	FILE *m_Stream;
-	bool m_Close;
-};
-
-//---------------------------------------------------------------------------------
-
 struct LogStandardFormatter : public LogSinkBasePolicy {
 	LogStandardFormatter();
 	void Format(const LogLine *line, char* buffer, size_t buffer_size);
@@ -124,13 +73,6 @@ protected:
 };
 
 //---------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------
-
-using StdFileLoggerSink = LogSink <LogFileOutputPolicy, LogStandardFormatter, LogNoFilteringPolicy >;
-using StdNoDebugFileLoggerSink = LogSink <LogFileOutputPolicy, LogStandardFormatter, LogNoDebugFilteringPolicy >;
-
-using StdCStreamLoggerSink = LogSink <CStreamOutputPolicy, LogStandardFormatter, LogNoFilteringPolicy >;
-using StdNoDebugCStreamLoggerSink = LogSink <CStreamOutputPolicy, LogStandardFormatter, LogNoDebugFilteringPolicy >;
 
 } //namespace OrbitLogger 
 

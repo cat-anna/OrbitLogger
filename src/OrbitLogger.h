@@ -13,12 +13,6 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef _MSC_VER
-#if _MSC_VER < 1900 && !defined(thread_local)
-#define thread_local __declspec(thread)
-#endif
-#endif
-
 #include "ThreadInfo.h"
 
 namespace OrbitLogger {
@@ -88,7 +82,7 @@ struct LogLine {
 	ThreadInfo::NumericID m_ThreadID;
 };
 
-} //namespace Log
+} //namespace OrbitLogger
 
 #include "LogLineSink.h"
 #include "LogCollector.h"
