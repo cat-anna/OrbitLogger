@@ -9,6 +9,8 @@
 #ifndef LoggerThread_H
 #define LoggerThread_H
 
+#include <cstdarg>
+
 namespace OrbitLogger {
 
 class LogCollector {

@@ -1,4 +1,3 @@
-#include <cstdarg>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -387,7 +386,7 @@ void LogCollector::PushLineCopy(const LogLineSourceInfo* SourceInfo, const char*
 	if (!s_Instance.m_Impl || !line)
 		return;
 
-	s_Instance.m_Impl->PushLinePtr(SourceInfo, line, length);
+	s_Instance.m_Impl->PushLineCopy(SourceInfo, line, length);
 }
 
 void LogCollector::PushLine(const LogLineSourceInfo* SourceInfo, const std::ostringstream &ss) {
