@@ -30,8 +30,7 @@ struct BaseFileLoggerSink : public LogSink <LogFileOutputPolicy, FilteringPolicy
 	}
 };
 
-using StdFileLoggerSink = BaseFileLoggerSink <LogStandardFormatter, LogNoDebugFilteringPolicy>;
+using StdFileLoggerSink = BaseFileLoggerSink <LogStandardFormatter, LogNoFilteringPolicy>;
 using StdNoDebugFileLoggerSink = BaseFileLoggerSink <LogStandardFormatter, LogNoDebugFilteringPolicy>;
-
 
 } //namespace OrbitLogger
