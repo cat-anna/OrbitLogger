@@ -73,7 +73,12 @@ struct LogLineBuffer {
 	bool Empty() const {
 		return m_LogLineAllocated == 0;
 	}
-	size_t AllocatedLines() const { return m_LogLineAllocated; }
+	size_t AllocatedLines() const { 
+        return std::min(m_LogLineAllocated.load(), (size_t)Configuration::LogLineBufferCapacity);
+    }
+    size_t AllocatedStringBytes() const {
+        return std::min(m_StringBufferUsage.load(), (size_t)Configuration::LogLineStringBufferSize);
+    }
 	LogLine* GetLine(size_t index) { 
 		if (index >= AllocatedLines())
 			return nullptr;
@@ -83,25 +88,6 @@ struct LogLineBuffer {
 	void Reset() {
 		size_t lines = m_LogLineAllocated.exchange(0);
 		size_t buffer = m_StringBufferUsage.exchange(0);
-
-		if (lines > Configuration::LogLineBufferCapacity) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Error);
-			auto line = AllocLogLine();
-			line->m_SourceInfo = &logsrc;
-			line->m_Message = "LogLine buffer overflow!";
-			line->m_ThreadSign = ThreadInfo::GetSignature();
-			line->m_ThreadID = ThreadInfo::GetID();
-			line->m_ExecutionSecs = 0;
-		}
-		if (buffer > Configuration::LogLineStringBufferSize) {
-			ORBITLOGGER_MakeSourceInfo(logsrc, Error);
-			auto line = AllocLogLine();
-			line->m_SourceInfo = &logsrc;
-			line->m_Message = "LogLine string buffer overflow!";
-			line->m_ThreadSign = ThreadInfo::GetSignature();
-			line->m_ThreadID = ThreadInfo::GetID();
-			line->m_ExecutionSecs = 0;
-		}
 	}
 private:
 	std::atomic_size_t m_LogLineAllocated;
@@ -158,11 +144,11 @@ struct LogCollector::LogCollectorImpl {
 
 		auto *LogBuffer = m_CurrentBuffer;
 
-		auto line = LogBuffer->AllocLogLine();
-		if (!line)
-			return;
 		auto msgBuffer = LogBuffer->AllocateString(length);
 		if (!msgBuffer)
+			return;
+		auto line = LogBuffer->AllocLogLine();
+		if (!line)
 			return;
 
 		memcpy(msgBuffer, message, length);
@@ -282,8 +268,32 @@ private:
 			//wait for all writers to finish their job
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-			for (size_t i = 0, j = buffer->AllocatedLines(); i < j; ++i)
+            size_t j = buffer->AllocatedLines();
+			for (size_t i = 0; i < j; ++i)
 				ProcessLine(buffer->GetLine(i));
+                   
+            if (j >= Configuration::LogLineBufferCapacity) {
+                ORBITLOGGER_MakeSourceInfo(logsrc, Error);
+                LogLine line = {};
+                line.m_SourceInfo = &logsrc;
+                line.m_Message = "LogLine buffer overflow!";
+                line.m_ThreadSign = ThreadInfo::GetSignature();
+                line.m_ThreadID = ThreadInfo::GetID();
+                std::chrono::duration<double> sec = std::chrono::steady_clock::now() - m_ExecutionTime;
+                line.m_ExecutionSecs = static_cast<float>(sec.count());
+                ProcessLine(&line);
+            }
+            if (buffer->AllocatedStringBytes() >= Configuration::LogLineStringBufferSize) {
+                ORBITLOGGER_MakeSourceInfo(logsrc, Error);
+                LogLine line = {};
+                line.m_SourceInfo = &logsrc;
+                line.m_Message = "LogLine string buffer overflow!";
+                line.m_ThreadSign = ThreadInfo::GetSignature();
+                line.m_ThreadID = ThreadInfo::GetID();
+                std::chrono::duration<double> sec = std::chrono::steady_clock::now() - m_ExecutionTime;
+                line.m_ExecutionSecs = static_cast<float>(sec.count());
+                ProcessLine(&line);
+            }
 
 			buffer->Reset();
 		}
