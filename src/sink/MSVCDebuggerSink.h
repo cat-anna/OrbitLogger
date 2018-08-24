@@ -17,7 +17,18 @@ struct MSVCDebuggerFormatPolicy {
 };
 
 struct MSVCDebuggerFilteringPolicy {
-	bool Filter(const OrbitLogger::LogLine *line) const { return line->m_SourceInfo != nullptr; }
+	bool Filter(const OrbitLogger::LogLine *line) const { 
+        if(line->m_SourceInfo == nullptr)
+            return false;
+        auto ch = line->m_SourceInfo->m_Channel;
+        switch (ch) {
+        case OrbitLogger::LogChannels::Error:
+        case OrbitLogger::LogChannels::Warning:
+            return true;
+        default:
+            return false;
+        }
+    }
 };
 
 using MSVCDebuggerSink = LogSink < MSVCDebuggerOutputPolicy, MSVCDebuggerFormatPolicy, MSVCDebuggerFilteringPolicy >;
