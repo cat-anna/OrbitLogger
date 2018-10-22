@@ -9,7 +9,11 @@ struct LogFileOutputPolicy : public LogSinkBasePolicy {
 		m_File << "\n\n";
 		m_File.close();
 	}
-	void Open(const char*file, bool append = true) {
+    void Open(const std::string &file, bool append = true) {
+        m_File.open(file, std::ios::out | (append ? std::ios::app : 0));
+        GetSinkBase().PrintBanner();
+    }
+	void Open(const char *file, bool append = true) {
 		m_File.open(file, std::ios::out | (append ? std::ios::app : 0));
 		GetSinkBase().PrintBanner();
 	}
