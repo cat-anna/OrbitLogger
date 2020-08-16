@@ -1,0 +1,5 @@
+file(GLOB_RECURSE SRC *.cpp *.h *.hpp)
+set(TARGET orbit_logger)
+add_library(${TARGET} ${SRC})
+target_include_directories(${TARGET} PUBLIC include)
+target_compile_definitions(${TARGET} PRIVATE -DBUILDING_ORBIT_LOGGER)

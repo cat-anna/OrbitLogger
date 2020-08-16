@@ -1,7 +1,3 @@
-#include "../OrbitLogger.h"
-#include "FileSink.h"
+#include "orbit_logger/sink/file_sink.h"
 
-namespace OrbitLogger {
-
-} //namespace OrbitLogger
-
+namespace OrbitLogger {} // namespace OrbitLogger

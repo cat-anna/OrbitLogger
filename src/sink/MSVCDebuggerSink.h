@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../LogLineSink.h"
+#include "orbit_logger.h"
 
 namespace OrbitLogger {
 

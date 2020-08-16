@@ -8,7 +8,7 @@ TODO: this document
 
 ```c++
 
-#include <OrbitLogger/src/OrbitLogger.h>
+#include <orbit_logger.h>
 #include <OrbitLogger/src/sink/FileSink.h>
 #include <OrbitLogger/src/sink/MSVCDebuggerSink.h>
 
