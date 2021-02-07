@@ -18,14 +18,14 @@ public:
 template <class OutputPolicy, class FilteringPolicy, class FormatPolicy>
 struct LogSink : public iLogSinkBase, public OutputPolicy, public FilteringPolicy, public FormatPolicy {
     virtual void Line(const LogLine *line) override {
-        if (!Filter(line))
+        if (!this->Filter(line))
             return;
         char buffer[Configuration::StringFormatBuffer];
         buffer[sizeof(buffer) - 1] = 0;
-        Format(line, buffer, sizeof(buffer) - 1);
-        Write(line, buffer);
+        this->Format(line, buffer, sizeof(buffer) - 1);
+        this->Write(line, buffer);
     }
-    virtual void RawLine(const char *line) override { Write(nullptr, line); }
+    virtual void RawLine(const char *line) override { this->Write(nullptr, line); }
 };
 
 //---------------------------------------------------------------------------------

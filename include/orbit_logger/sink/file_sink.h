@@ -30,7 +30,7 @@ struct BaseFileLoggerSink : public LogSink <LogFileOutputPolicy, FilteringPolicy
 
 	template<typename ... ARGS>
 	BaseFileLoggerSink(ARGS&&...args) {
-		Open(std::forward<ARGS>(args)...);
+		this->Open(std::forward<ARGS>(args)...);
 	}
 };
 
